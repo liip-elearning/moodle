@@ -569,7 +569,7 @@ class core_user_external extends external_api {
         require_capability('moodle/user:update', $context);
         self::validate_context($context);
 
-        $params = self::validate_parameters(self::update_users_parameters(), array('users' => $users));
+        $params = self::validate_parameters(static::update_users_parameters(), array('users' => $users));
 
         $filemanageroptions = array('maxbytes' => $CFG->maxbytes,
                 'subdirs'        => 0,
