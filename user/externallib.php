@@ -149,7 +149,7 @@ class core_user_external extends external_api {
 
         // Do basic automatic PARAM checks on incoming data, using params description.
         // If any problems are found then exceptions are thrown with helpful error messages.
-        $params = self::validate_parameters(self::create_users_parameters(), array('users' => $users));
+        $params = self::validate_parameters(static::create_users_parameters(), array('users' => $users));
 
         $availableauths  = core_component::get_plugin_list('auth');
         unset($availableauths['mnet']);       // These would need mnethostid too.
