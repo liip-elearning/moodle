@@ -1493,6 +1493,7 @@ class core_course_external extends external_api {
                     new external_single_structure(
                         array(
                                 'name' => new external_value(PARAM_ALPHA, 'The backup option name:
+                                            "overwriteconf" (int) Include course configuration (default to 0 that is equal to no),
                                             "activities" (int) Include course activites (default to 1 that is equal to yes),
                                             "blocks" (int) Include course blocks (default to 1 that is equal to yes),
                                             "filters" (int) Include course filters  (default to 1 that is equal to yes)'
@@ -1511,7 +1512,7 @@ class core_course_external extends external_api {
      *
      * @param int $importfrom The id of the course we are importing from
      * @param int $importto The id of the course we are importing to
-     * @param bool $deletecontent Whether to delete the course we are importing to content
+     * @param int $deletecontent Whether to delete the course we are importing to content
      * @param array $options List of backup options
      * @return null
      * @since Moodle 2.4
@@ -1552,6 +1553,23 @@ class core_course_external extends external_api {
         $importtocontext = context_course::instance($importto->id);
         self::validate_context($importtocontext);
 
+        // Available restore options.
+        $restoresettings = array(
+            'overwrite_conf' => 0
+        );
+
+        // Extract restore options.
+        foreach ($params['options'] as $k => $option) {
+            if ($option['name'] == 'overwriteconf') {
+                $value = clean_param($option['value'], PARAM_INT);
+                if ($value !== 0 and $value !== 1) {
+                    throw new moodle_exception('invalidextparam', 'webservice', '', 'overwriteconf');
+                }
+                $restoresettings['overwrite_conf'] = $value;
+                unset($params['options'][$k]);
+            }
+        }
+
         $backupdefaults = array(
             'activities' => 1,
             'blocks' => 1,
@@ -1560,7 +1578,7 @@ class core_course_external extends external_api {
 
         $backupsettings = array();
 
-        // Check for backup and restore options.
+        // Check for backup options.
         if (!empty($params['options'])) {
             foreach ($params['options'] as $option) {
 
@@ -1609,7 +1627,10 @@ class core_course_external extends external_api {
         $rc = new restore_controller($backupid, $importto->id,
                 backup::INTERACTIVE_NO, backup::MODE_IMPORT, $USER->id, $restoretarget);
 
-        foreach ($backupsettings as $name => $value) {
+        // Include backupsettings to restoresettings.
+        $allsettings = array_merge($backupsettings, $restoresettings);
+
+        foreach ($allsettings as $name => $value) {
             $rc->get_plan()->get_setting($name)->set_value($value);
         }
 
